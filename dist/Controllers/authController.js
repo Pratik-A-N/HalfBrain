@@ -12,11 +12,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SignUpHandler = void 0;
+exports.LoginHandler = exports.SignUpHandler = void 0;
 const schemas_1 = require("../ZodSchemas/schemas");
 const zod_1 = require("zod");
 const db_1 = require("../db");
 const bcrypt_1 = __importDefault(require("bcrypt"));
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const secretKey = process.env.JWT_SECRET_KEY || '';
 const SignUpHandler = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const body = req.body;
     try {
@@ -52,3 +54,45 @@ const SignUpHandler = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.SignUpHandler = SignUpHandler;
+const LoginHandler = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const body = req.body;
+    try {
+        const validatedBody = schemas_1.signUpSchema.parse(body);
+        const existingUser = yield db_1.User.find({
+            username: validatedBody.username
+        });
+        if (existingUser.length > 0) {
+            const user = existingUser[0];
+            const isCorrect = yield bcrypt_1.default.compare(validatedBody.password, user.password);
+            if (!isCorrect) {
+                res.status(403).send({
+                    "message": "Incorect Password"
+                });
+                return;
+            }
+            const token = jsonwebtoken_1.default.sign({
+                "userId": user._id
+            }, secretKey);
+            res.status(200).send({
+                "token": token
+            });
+        }
+        else {
+            res.status(404).send({
+                "message": "Username does not exist"
+            });
+        }
+    }
+    catch (error) {
+        if (error instanceof zod_1.ZodError) {
+            console.error("Validation failed: ", error.issues[0]);
+        }
+        else {
+            console.error("Unexpected error: ", error);
+        }
+        res.status(500).send({
+            "message": error
+        });
+    }
+});
+exports.LoginHandler = LoginHandler;

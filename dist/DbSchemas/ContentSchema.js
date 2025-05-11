@@ -32,23 +32,22 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Share = exports.Tag = exports.Content = exports.User = void 0;
+exports.contentSchema = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const dotenv_1 = __importDefault(require("dotenv"));
-const UserSchema_1 = require("./DbSchemas/UserSchema");
-const ContentSchema_1 = require("./DbSchemas/ContentSchema");
-const TagSchema_1 = require("./DbSchemas/TagSchema");
-const ShareSchema_1 = require("./DbSchemas/ShareSchema");
-dotenv_1.default.config();
-const DB_URL = process.env.MONGODB_CONNECTION_STRING || "";
-mongoose_1.default.connect(DB_URL)
-    .then(() => console.log('Connected to MongoDB'))
-    .catch((error) => console.error('Connection error: ', error));
-exports.User = (0, mongoose_1.model)('User', UserSchema_1.userSchema);
-exports.Content = (0, mongoose_1.model)('Content', ContentSchema_1.contentSchema);
-exports.Tag = (0, mongoose_1.model)('Tag', TagSchema_1.tagSchema);
-exports.Share = (0, mongoose_1.model)('Share', ShareSchema_1.shareSchema);
+var ContentType;
+(function (ContentType) {
+    ContentType["Document"] = "Document";
+    ContentType["Tweet"] = "Tweet";
+    ContentType["Youtube"] = "YouTube";
+    ContentType["Link"] = "Link";
+})(ContentType || (ContentType = {}));
+exports.contentSchema = new mongoose_1.Schema({
+    title: { type: String, required: true },
+    url: { type: String, required: true },
+    type: { type: String, required: true },
+    tags: [
+        { type: mongoose_1.default.Schema.Types.ObjectId, ref: 'Tag' }
+    ],
+    user: { type: mongoose_1.default.Schema.Types.ObjectId, ref: 'User' }
+});
